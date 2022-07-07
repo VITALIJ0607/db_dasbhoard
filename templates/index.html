@@ -1,0 +1,15 @@
+<!doctype html>
+<html>
+    <body>
+	<h1>DB Dashboard</h1>
+	<form action="{{ url_for('get_timetable') }}" method="post">
+	    <label>Abfahrszeit / Ankunftszeit: </label>
+	    <input type="text" name="time" value="2022-07-08T11:40"><br><br>
+	    <label>Bahnhofsauswahl: </label>
+	    <input type="text" name="location"><br><br>
+	    <label>Optionale Gleisauswahl: </label>
+	    <input type="text" name="track"><br><br>
+	    <input type="submit" value="Daten abschicken">
+	</form>
+    </body>
+</html>
