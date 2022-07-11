@@ -16,4 +16,5 @@
 
 5. Run the app
 
-    python app.py
+   export FLASK_APP=app.py
+   flask run

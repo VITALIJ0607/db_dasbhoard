@@ -1,10 +1,7 @@
 """Simple app for checking train arrival and departure times."""
 
-from argparse import ArgumentParser
-from configparser import ConfigParser
 from datetime import date
 from functools import lru_cache
-from os import environ
 import json
 import requests
 
@@ -16,10 +13,8 @@ from flask import (
 )
 
 
-CONFIG_PATH = "app.conf"
-
-
 app = Flask(__name__)
+app.config.from_object("config.Config")
 
 
 @lru_cache(maxsize=100)
@@ -30,9 +25,9 @@ def get_timetable_information(location, time, track, date):
 		time -- Arrival and departure time
 		track -- The railway track
     """
-    api_url = environ.get("API_URL")
-    client_id = environ.get("CLIENT_ID")
-    client_secret = environ.get("CLIENT_SECRET")
+    api_url = app.config["DB_API_URL"]
+    client_id = app.config["DB_CLIENT_ID"]
+    client_secret = app.config["DB_CLIENT_SECRET"]
     headers = {
         "Accept": "application/json",
         "DB-Client-id": client_id,
@@ -71,15 +66,6 @@ def get_timetable():
 
 
 if __name__ == "__main__":
-    parser = ArgumentParser()
-    parser.add_argument("--debug", action="store_true")
-    args = parser.parse_args()
-    config = ConfigParser()
-    config.sections()
-    config.read(CONFIG_PATH)
-    environ["API_URL"] = config["App"]["db_api_url"]
-    environ["CLIENT_ID"] = config["App"]["db_client_id"]
-    environ["CLIENT_SECRET"] = config["App"]["db_client_secret"]
-    host = config["App"]["host"]
-    port = int(config["App"]["port"])
-    app.run(host, port, debug=args.debug)
+    host = app.config["HOST"]
+    port = app.config["PORT"]
+    app.run(host, port)
