@@ -1,7 +1,7 @@
 """Simple app for checking train arrival and departure times."""
 
+from argparse import ArgumentParser
 from datetime import date
-from functools import lru_cache
 import json
 import requests
 
@@ -13,17 +13,19 @@ from flask import (
 )
 
 
+CACHE_SIZE = 100
+
 app = Flask(__name__)
 app.config.from_object("config.Config")
 
 
-@lru_cache(maxsize=100)
-def get_timetable_information(location, time, track, date):
+def get_timetable_information(location, time, track, date, _cache={}):
     """Gets timetable information by DB REST API
             Arguments:
-	        location -- The destinated station
-		time -- Arrival and departure time
-		track -- The railway track
+            location -- The destinated station
+        time -- Arrival and departure time
+        track -- The railway track
+        date -- The date
     """
     api_url = app.config["DB_API_URL"]
     client_id = app.config["DB_CLIENT_ID"]
@@ -34,17 +36,22 @@ def get_timetable_information(location, time, track, date):
         "DB-Api-Key": client_secret,
     }
     url = f"{api_url}/{location}?date={date}"
-    response = requests.get(url, headers=headers)
+    if url not in _cache:
+        response = requests.get(url, headers=headers)
+        if response.ok:
+            data = json.loads(response.text)
+            if len(_cache) == CACHE_SIZE:
+                _cache.popitem()
+            _cache[url] = data
+    data = _cache.get(url, [])
     result = []
-    if response.ok:
-        data = json.loads(response.text)
-        date_time = f"{date}T{time}" if time else None
-        for entry in data:
-            if date_time and (date_time >= entry["dateTime"]):
-                continue
-            if track and track != entry["track"]:
-               continue
-            result.append(entry)
+    date_time = f"{date}T{time}" if time else None
+    for entry in data:
+        if date_time and (date_time >= entry["dateTime"]):
+            continue
+        if track and track != entry["track"]:
+            continue
+        result.append(entry)
     return result
 
 
@@ -66,6 +73,9 @@ def get_timetable():
 
 
 if __name__ == "__main__":
-    host = app.config["HOST"]
-    port = app.config["PORT"]
-    app.run(host, port)
+    parser = ArgumentParser()
+    parser.add_argument("--host", default="localhost")
+    parser.add_argument("--port", type=int, default=9000)
+    parser.add_argument("--debug", action="store_true")
+    args = parser.parse_args()
+    app.run(args.host, args.port, debug=args.debug)
