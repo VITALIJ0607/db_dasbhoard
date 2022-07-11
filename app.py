@@ -40,7 +40,7 @@ def get_timetable_information(location, time, track, date):
         data = json.loads(response.text)
         date_time = f"{date}T{time}" if time else None
         for entry in data:
-            if date_time and date_time != entry["dateTime"]:
+            if date_time and (date_time >= entry["dateTime"]):
                 continue
             if track and track != entry["track"]:
                continue
