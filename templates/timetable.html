@@ -8,6 +8,13 @@
 	<td>Gleis</td>
 	<td>Abfahrtzeit</td>
     </tr>
-
+    {%for entry in data%}
+    <tr>
+	<td>{{entry["origin"]}}</td>
+	<td>{{entry["stopName"]}}</td>
+	<td>{{entry["track"]}}</td>
+	<td>{{entry["dateTime"]}}</td>
+    </tr>
+    {%endfor%}
     </table>
 </html>

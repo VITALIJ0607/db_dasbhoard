@@ -23,7 +23,13 @@ app = Flask(__name__)
 
 
 @lru_cache(maxsize=100)
-def get_train_information(location, time, track, today):
+def get_timetable_information(location, time, track, date):
+    """Gets timetable information by DB REST API
+            Arguments:
+	        location -- The destinated station
+		time -- Arrival and departure time
+		track -- The railway track
+    """
     api_url = environ.get("API_URL")
     client_id = environ.get("CLIENT_ID")
     client_secret = environ.get("CLIENT_SECRET")
@@ -32,13 +38,14 @@ def get_train_information(location, time, track, today):
         "DB-Client-id": client_id,
         "DB-Api-Key": client_secret,
     }
-    url = f"{api_url}/{location}?date={today}"
+    url = f"{api_url}/{location}?date={date}"
     response = requests.get(url, headers=headers)
     result = []
     if response.ok:
         data = json.loads(response.text)
+        date_time = f"{date}T{time}" if time else None
         for entry in data:
-            if time and time != entry["dateTime"]:
+            if date_time and date_time != entry["dateTime"]:
                 continue
             if track and track != entry["track"]:
                continue
@@ -47,17 +54,19 @@ def get_train_information(location, time, track, today):
 
 
 @app.route("/")
-def index():
+def get_index():
+    """Returns rendered input form."""
     return render_template("index.html")
 
 
 @app.route("/timetable", methods=["POST"])
 def get_timetable():
+    """Return rendered timetable."""
     location = request.form["location"].strip()
     time = request.form["time"].strip()
     track = request.form["track"].strip()
     today = date.today().strftime("%Y-%m-%d")
-    result = get_train_information(location, time, track, today)
+    result = get_timetable_information(location, time, track, today)
     return render_template("timetable.html", data=result)
 
 
